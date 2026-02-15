@@ -1,7 +1,6 @@
-package com.k2fsa.sherpa.onnx.tts.engine
+package org.ll.tts.engine
 
 import android.content.Context
-import android.content.res.AssetManager
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
@@ -58,13 +57,17 @@ object TtsEngine {
 
     private fun loadLanguageSettings(context: Context, language: String) {
         val db = LangDB.getInstance(context)
-        val currentLanguage = db.allInstalledLanguages.first { it.lang == language }
-        this.lang = language
-        this.country = currentLanguage.country
-        this.speed.value = currentLanguage.speed
-        this.speakerId.value = currentLanguage.sid
-        this.volume.value = currentLanguage.volume
-        PreferenceHelper(context).setCurrentLanguage(language)
+        val allLanguages = db.allInstalledLanguages
+        val currentLanguage = allLanguages.firstOrNull { it.lang == language }
+        if (currentLanguage != null) {
+            this.lang = language
+            this.country = currentLanguage.country
+            this.speed.value = currentLanguage.speed
+            this.speakerId.value = currentLanguage.sid
+            this.volume.value = currentLanguage.volume
+            this.modelName = currentLanguage.name
+            PreferenceHelper(context).setCurrentLanguage(language)
+        }
     }
 
     fun removeLanguageFromCache(language: String) {
@@ -93,9 +96,11 @@ object TtsEngine {
             ruleFsts = "$modelDir/phone.fst,$modelDir/date.fst,$modelDir/number.fst"
         }
 
+        Log.i(TAG, "Initializing OfflineTts with modelDir: $modelDir, modelName: $modelName")
+        
         val config = getOfflineTtsConfig(
             modelDir = modelDir!!,
-            modelName = modelName ?: "",
+            modelName = modelName ?: "model.onnx",
             acousticModelName = acousticModelName ?: "",
             vocoder = vocoder ?: "",
             voices = voices ?: "",
@@ -110,18 +115,20 @@ object TtsEngine {
             model = config.model.copy(debug = false)
         )
 
-        tts = OfflineTts(assetManager = null, config = configDebugOff)
-        ttsCache[lang] = tts!!
-        Log.i(TAG, "TTS cache size:"+ ttsCache.size)
+        try {
+            tts = OfflineTts(assetManager = null, config = configDebugOff)
+            ttsCache[lang] = tts!!
+            Log.i(TAG, "TTS cache size:"+ ttsCache.size)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize OfflineTts: ${e.message}")
+            throw e
+        }
     }
 
     private fun copyDataDir(context: Context, dataDir: String): String {
         Log.i(TAG, "data dir is $dataDir")
-        if (!PreferenceHelper(context).isInitFinished()){  //only copy at first startup
-            copyAssets(context, dataDir)
-            PreferenceHelper(context).setInitFinished()
-        }
         val newDataDir = context.getExternalFilesDir(null)!!.absolutePath + "/" + dataDir
+        copyAssets(context, dataDir)
         Log.i(TAG, "newDataDir: $newDataDir")
         return newDataDir
     }
@@ -130,19 +137,19 @@ object TtsEngine {
         val assets: Array<String>?
         try {
             assets = context.assets.list(path)
-            if (assets!!.isEmpty()) {
+            if (assets.isNullOrEmpty()) {
                 copyFile(context, path)
             } else {
                 val fullPath = "${context.getExternalFilesDir(null)}/$path"
                 val dir = File(fullPath)
                 dir.mkdirs()
-                for (asset in assets.iterator()) {
+                for (asset in assets) {
                     val p: String = if (path == "") "" else "$path/"
                     copyAssets(context, p + asset)
                 }
             }
         } catch (ex: IOException) {
-            Log.e(TAG, "Failed to copy $path. $ex")
+            Log.e(TAG, "Failed to copy assets from $path. $ex")
         }
     }
 
@@ -152,19 +159,83 @@ object TtsEngine {
             val newFilename = context.getExternalFilesDir(null)!!.absolutePath + "/" + filename
             val file = File(newFilename)
             if (!file.exists()) {
-                val ostream = FileOutputStream(newFilename)
+                val ostream = FileOutputStream(file)
                 val buffer = ByteArray(1024)
-                var read = 0
-                while (read != -1) {
+                var read: Int
+                while (istream.read(buffer).also { read = it } != -1) {
                     ostream.write(buffer, 0, read)
-                    read = istream.read(buffer)
                 }
                 istream.close()
                 ostream.flush()
                 ostream.close()
+                Log.d(TAG, "Copied file: $filename to $newFilename")
             }
         } catch (ex: Exception) {
-            Log.e(TAG, "Failed to copy $filename, $ex")
+            Log.e(TAG, "Failed to copy file $filename, $ex")
+        }
+    }
+
+    fun copyModelFromAssets(context: Context, assetPath: String, lang: String, country: String, modelName: String, type: String) {
+        val externalFilesDir = context.getExternalFilesDir(null)!!.absolutePath
+        val targetDir = "$externalFilesDir/$lang$country"
+        
+        Log.i(TAG, "Copying model from assets: $assetPath to $targetDir")
+
+        // Copy the model folder from assets to external storage
+        copyAssets(context, assetPath, targetDir)
+
+        // Register the model in the database
+        val db = LangDB.getInstance(context)
+        db.removeLang(lang) // Ensure we don't have duplicate entries
+        db.addLanguage(modelName, lang, country, 0, 1.0f, 1.0f, type)
+
+        // Set as current language if none is set
+        val prefs = PreferenceHelper(context)
+        if (prefs.getCurrentLanguage().isNullOrEmpty()) {
+            prefs.setCurrentLanguage(lang)
+        }
+    }
+
+    private fun copyAssets(context: Context, assetPath: String, targetBaseDir: String) {
+        val assets: Array<String>?
+        try {
+            assets = context.assets.list(assetPath)
+            if (assets.isNullOrEmpty()) {
+                copyFile(context, assetPath, targetBaseDir)
+            } else {
+                val dir = File(targetBaseDir)
+                if (!dir.exists()) dir.mkdirs()
+                for (asset in assets) {
+                    val p = if (assetPath == "") "" else "$assetPath/"
+                    val t = if (targetBaseDir.endsWith("/")) targetBaseDir else "$targetBaseDir/"
+                    copyAssets(context, p + asset, t + asset)
+                }
+            }
+        } catch (ex: IOException) {
+            Log.e(TAG, "Failed to copy assets from $assetPath. $ex")
+        }
+    }
+
+    private fun copyFile(context: Context, filename: String, targetPath: String) {
+        try {
+            val istream = context.assets.open(filename)
+            val file = File(targetPath)
+            file.parentFile?.mkdirs()
+
+            if (!file.exists()) {
+                val ostream = FileOutputStream(file)
+                val buffer = ByteArray(1024)
+                var read: Int
+                while (istream.read(buffer).also { read = it } != -1) {
+                    ostream.write(buffer, 0, read)
+                }
+                istream.close()
+                ostream.flush()
+                ostream.close()
+                Log.d(TAG, "Copied file: $filename to $targetPath")
+            }
+        } catch (ex: Exception) {
+            Log.e(TAG, "Failed to copy file $filename to $targetPath, $ex")
         }
     }
 }

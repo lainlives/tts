@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.k2fsa.sherpa.onnx.tts.engine"
+    namespace = "org.ll.tts.engine"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "org.woheller69.ttsengine"
+        applicationId = "org.ll.ttsenterprise"
         minSdk = 29
         targetSdk = 35
         versionCode = 29

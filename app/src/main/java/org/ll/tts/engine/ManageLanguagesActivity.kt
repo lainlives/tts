@@ -1,4 +1,4 @@
-package com.k2fsa.sherpa.onnx.tts.engine
+package org.ll.tts.engine
 
 import android.content.Intent
 import android.net.Uri
@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import com.k2fsa.sherpa.onnx.tts.engine.databinding.ActivityManageLanguagesBinding
+import org.ll.tts.engine.databinding.ActivityManageLanguagesBinding
 import java.util.Locale
 
 class ManageLanguagesActivity  : AppCompatActivity() {

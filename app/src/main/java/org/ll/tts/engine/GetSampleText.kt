@@ -1,4 +1,4 @@
-package com.k2fsa.sherpa.onnx.tts.engine
+package org.ll.tts.engine
 
 import android.app.Activity
 import android.content.Intent
@@ -47,7 +47,7 @@ fun getSampleText(lang: String): String {
         }
 
         "eng" -> {
-            text = "This is a text-to-speech engine using next generation Kaldi"
+            text = "Things are only impossible until they are not."
         }
 
         "est" -> {

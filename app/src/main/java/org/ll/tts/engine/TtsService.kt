@@ -1,4 +1,4 @@
-package com.k2fsa.sherpa.onnx.tts.engine
+package org.ll.tts.engine
 
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
@@ -71,14 +71,10 @@ class TtsService : TextToSpeechService() {
         val language = request.language
         val country = request.country
         val variant = request.variant
-        var pitch = 100f
-
-        val preferenceHelper = PreferenceHelper(this)
-
-        if (preferenceHelper.applySystemSpeed()){
-            pitch = request.pitch * 1.0f
-            TtsEngine.speed.value = request.speechRate / pitch  //divide by pitch to compensate for pitch adjustment performed in ttsCallback
-        }         // request.speechRate: System does not memorize different speeds for different languages
+        
+        // Always use system speed and pitch
+        val pitch = request.pitch.toFloat()
+        TtsEngine.speed.value = request.speechRate.toFloat() / pitch
 
         val text = request.charSequenceText.toString()
 

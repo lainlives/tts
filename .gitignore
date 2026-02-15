@@ -15,3 +15,6 @@
 .cxx
 local.properties
 /.idea/kotlinc.xml
+/app/src/main/assets/model/engUSA/model.onnx
+/app/src/main/assets/model/engUSA/tokens.txt
+/app/release/

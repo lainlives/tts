@@ -1,10 +1,10 @@
-package com.k2fsa.sherpa.onnx.tts.engine
+package org.ll.tts.engine
 import android.content.Context
 import android.content.SharedPreferences
 
 class PreferenceHelper(context: Context) {
 
-    private val PREFS_NAME = "com.k2fsa.sherpa.onnx.tts.engine"
+    private val PREFS_NAME = "org.ll.tts.engine"
     private val SPEED_KEY = "speed"
     private val SID_KEY = "speaker_id"
     private val INIT_KEY = "init_espeak"

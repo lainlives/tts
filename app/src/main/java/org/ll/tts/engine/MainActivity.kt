@@ -24,7 +24,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+// import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -116,7 +116,7 @@ class MainActivity : ComponentActivity() {
                                 actions = {
                                     IconButton(
                                         onClick = {
-                                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/woheller69/ttsengine")))
+                                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/lainlives/tts")))
                                         }
                                     ) {
                                         Icon(
@@ -127,20 +127,20 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             )
-                        },
-                        floatingActionButton = {
-                            FloatingActionButton(
-                                onClick = {
-                                    val intent = Intent("com.android.settings.TTS_SETTINGS")
-                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                    startActivity(intent)
-                                },
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ) {
-                                Icon(Icons.Filled.Settings, contentDescription = "TTS Settings")
-                            }
-                        }
+                        }//,
+//                        floatingActionButton = {
+//                            FloatingActionButton(
+//                                onClick = {
+//                                    val intent = Intent("com.android.settings.TTS_SETTINGS")
+//                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//                                    startActivity(intent)
+//                                },
+//                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+//                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+//                            ) {
+//                                Icon(Icons.Filled.Settings, contentDescription = "TTS Settings")
+//                            }
+//                        }
                     ) { innerPadding ->
                         Box(modifier = Modifier.padding(innerPadding)) {
                             var sampleText by remember { mutableStateOf(getSampleText(TtsEngine.lang ?: "")) }
@@ -150,20 +150,22 @@ class MainActivity : ComponentActivity() {
                                     .fillMaxSize()
                                     .padding(16.dp)
                             ) {
+                                    item {
+                                        Button(
+                                            modifier = Modifier.padding(5.dp),
+                                            onClick = {
+                                                val intent = Intent("com.android.settings.TTS_SETTINGS")
+                                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                                startActivity(intent)
+                                            }
+                                        ) {
+                                            Icon(Icons.Filled.Settings, contentDescription = "TTS Settings")
+                                            Text("TTS Settings")
+                                        }
+                                    }
                                 item {
-                                    Text(
-                                        "System Controlled Speed enabled.", 
-                                        modifier = Modifier.padding(bottom = 8.dp),
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                    Text(
-                                        "Configure speed in Android Settings -> Accessibility -> Text-to-speech output.", 
-                                        modifier = Modifier.padding(bottom = 16.dp),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Text("Test:")
                                 }
-
                                 item {
                                     OutlinedTextField(
                                         value = sampleText,
@@ -191,7 +193,7 @@ class MainActivity : ComponentActivity() {
                                             }
                                         ) {
                                             Icon(
-                                                painter = painterResource(id = R.drawable.ic_play_24dp), 
+                                                painter = painterResource(id = R.drawable.ic_play_24dp),
                                                 contentDescription = stringResource(id = R.string.play),
                                                 modifier = Modifier.padding(end = 8.dp)
                                             )
@@ -207,7 +209,7 @@ class MainActivity : ComponentActivity() {
                                             }
                                         ) {
                                             Icon(
-                                                painter = painterResource(id = R.drawable.ic_stop_24dp), 
+                                                painter = painterResource(id = R.drawable.ic_stop_24dp),
                                                 contentDescription = stringResource(id = R.string.stop),
                                                 modifier = Modifier.padding(end = 8.dp)
                                             )
